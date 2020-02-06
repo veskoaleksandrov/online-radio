@@ -2,16 +2,33 @@ library(httr)
 library(jsonlite)
 library(plyr)
 
-db.Path <- "C:/Users/Vesko/Documents/R Scripts/recently_played_di.rds"
+db.Path <- "recently_played_di.rds"
 if(file.exists(db.Path)) {
   channel_playlist <- readRDS(file = db.Path)
 }
 
-player <- "http://www.di.fm/webplayer3/config"
-channels <- fromJSON(txt = player)$API$Config$channels
+# player <- "http://www.di.fm/webplayer3/config"
+# channels <- fromJSON(txt = player)$API$Config$channels
+# channels$created_at <- as.POSIXct(x = channels$created_at, format = "%Y-%m-%dT%H:%M:%S")
+# channels$updated_at <- as.POSIXct(x = channels$updated_at, format = "%Y-%m-%dT%H:%M:%S")
+# channels <- subset(x = channels, select = -c(images, similar_channels))
+
+library(tidyverse)
+player <- "https://www.radiotunes.com/"
+player <- "https://di.fm/"
+app <- read_html(player) %>% 
+  html_nodes("script:contains('audio_token')") %>% 
+  html_text() %>% 
+  str_trim() %>% 
+  gsub(pattern = "^di.app.start\\(", replacement = "") %>% 
+  gsub(pattern = "\\);$", replacement = "") %>%
+  fromJSON()
+app$user$audio_token
+channels <- app$channels
 channels$created_at <- as.POSIXct(x = channels$created_at, format = "%Y-%m-%dT%H:%M:%S")
 channels$updated_at <- as.POSIXct(x = channels$updated_at, format = "%Y-%m-%dT%H:%M:%S")
 channels <- subset(x = channels, select = -c(images, similar_channels))
+View(channels)
 
 for(j in 1:24) {
   # print(paste0("j = ", j))
